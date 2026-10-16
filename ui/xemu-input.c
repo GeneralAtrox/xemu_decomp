@@ -29,6 +29,7 @@
 #include "qemu/config-file.h"
 
 #include "xemu-input.h"
+#include "xemu-automation.h"
 #include "xemu-notifications.h"
 #include "xemu-settings.h"
 #include <stdio.h>
@@ -308,8 +309,12 @@ void xemu_input_init(void)
     bound_drivers[2] = get_bound_driver(2);
     bound_drivers[3] = get_bound_driver(3);
 
-    // Check to see if we should auto-bind the keyboard
-    int port = xemu_input_get_controller_default_bind_port(new_con, 0);
+    // Check to see if we should auto-bind the keyboard. Under -automation
+    // only the virtual controller is bound, so the host's devices never
+    // reach the guest.
+    int port = g_xemu_automation
+                   ? -1
+                   : xemu_input_get_controller_default_bind_port(new_con, 0);
     if (port >= 0) {
         xemu_input_bind(port, new_con, 0);
         char buf[128];
@@ -319,6 +324,10 @@ void xemu_input_init(void)
     }
 
     QTAILQ_INSERT_TAIL(&available_controllers, new_con, entry);
+
+    if (g_xemu_automation) {
+        xemu_automation_init_input();
+    }
 }
 
 int xemu_input_get_controller_default_bind_port(ControllerState *state, int start)
@@ -408,7 +417,8 @@ void xemu_input_process_sdl_events(const SDL_Event *event)
         // Attempt to re-bind to port previously bound to
         int port = 0;
         bool did_bind = false;
-        while (!did_bind) {
+        // Under -automation a host gamepad is never bound.
+        while (!did_bind && !g_xemu_automation) {
             port = xemu_input_get_controller_default_bind_port(new_con, port);
             if (port < 0) {
                 // No (additional) default mappings
@@ -424,7 +434,7 @@ void xemu_input_process_sdl_events(const SDL_Event *event)
         }
 
         // Try to bind to any open port, and if so remember the binding
-        if (!did_bind && g_config.input.auto_bind) {
+        if (!did_bind && !g_xemu_automation && g_config.input.auto_bind) {
             for (port = 0; port < 4; port++) {
                 if (!xemu_input_get_bound(port)) {
                     xemu_input_bind(port, new_con, 1);

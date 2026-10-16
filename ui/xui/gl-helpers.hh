@@ -53,4 +53,7 @@ void RenderFramebuffer(GLint tex, int width, int height, bool flip);
 void RenderFramebuffer(GLint tex, int width, int height, bool flip, float scale[2]);
 bool RenderFramebufferToPng(GLuint tex, bool flip, std::vector<uint8_t> &png, int max_width = 0, int max_height = 0);
 void SaveScreenshot(GLuint tex, bool flip);
+// Writes the frame to `path` (beside it first, then renamed, so a reader
+// polling for the file sees it complete); false with an error printed.
+bool SaveScreenshotToFile(GLuint tex, bool flip, const char *path);
 void ScaleDimensions(int src_width, int src_height, int max_width, int max_height, int *out_width, int *out_height);

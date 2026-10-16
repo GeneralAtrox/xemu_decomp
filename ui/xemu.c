@@ -43,6 +43,7 @@
 #include "system/runstate-action.h"
 #include "system/system.h"
 #include "xui/xemu-hud.h"
+#include "xemu-automation.h"
 #include "xemu-input.h"
 #include "xemu-settings.h"
 #include "xemu-snapshots.h"
@@ -1084,6 +1085,11 @@ static void display_very_early_init(DisplayOptions *o)
     }
 
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    if (g_xemu_automation) {
+        // Stay out of the user's way: minimized, never activated or focused.
+        SDL_SetHint(SDL_HINT_WINDOW_ACTIVATE_WHEN_SHOWN, "0");
+        window_flags |= SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE;
+    }
 
     // Create main window
     m_window = SDL_CreateWindow(
@@ -1380,6 +1386,13 @@ int main(int argc, char **argv)
     gArgv = argv;
 
     for (int i = 1; i < argc; i++) {
+        if (argv[i] && strcmp(argv[i], "-automation") == 0) {
+            argv[i] = NULL;
+            g_xemu_automation = true;
+        }
+    }
+
+    for (int i = 1; i < argc; i++) {
         if (argv[i] && strcmp(argv[i], "-config_path") == 0) {
             argv[i] = NULL;
             if (i < argc - 1 && argv[i+1]) {
@@ -1399,7 +1412,9 @@ int main(int argc, char **argv)
         SDL_Quit();
         exit(1);
     }
-    atexit(xemu_settings_save);
+    if (!g_xemu_automation) {
+        atexit(xemu_settings_save);
+    }
 
 #ifdef _WIN32
     if (g_config.display.setup_nvidia_profile) {

@@ -27,6 +27,7 @@
 #include "notifications.hh"
 #include "stb_image.h"
 #include <fpng.h>
+#include <glib/gstdio.h>
 #include <math.h>
 #include <stdio.h>
 #include <vector>
@@ -1007,6 +1008,32 @@ bool RenderFramebufferToPng(GLuint tex, bool flip, std::vector<uint8_t> &png, in
     fbo.Restore();
 
     return fpng::fpng_encode_image_to_memory(pixels.data(), width, height, 3, png);
+}
+
+bool SaveScreenshotToFile(GLuint tex, bool flip, const char *path)
+{
+    std::vector<uint8_t> png;
+    if (!RenderFramebufferToPng(tex, flip, png)) {
+        fprintf(stderr, "xemu-screenshot: failed to encode %s\n", path);
+        return false;
+    }
+
+    char *part = g_strdup_printf("%s.part", path);
+    FILE *fd = qemu_fopen(part, "wb");
+    bool ok = fd != NULL && fwrite(png.data(), png.size(), 1, fd) == 1;
+    if (fd) {
+        ok = fclose(fd) == 0 && ok;
+    }
+    if (ok) {
+        g_remove(path);
+        ok = g_rename(part, path) == 0;
+    }
+    if (!ok) {
+        fprintf(stderr, "xemu-screenshot: failed to write %s\n", path);
+        g_remove(part);
+    }
+    g_free(part);
+    return ok;
 }
 
 void SaveScreenshot(GLuint tex, bool flip)

@@ -34,6 +34,7 @@
 #include "actions.hh"
 #include "common.hh"
 #include "xemu-hud.h"
+#include "../xemu-automation.h"
 #include "misc.hh"
 #include "gl-helpers.hh"
 #include "input-manager.hh"
@@ -335,5 +336,11 @@ void xemu_hud_render()
     if (g_screenshot_pending) {
         SaveScreenshot(g_tex, g_flip_req);
         g_screenshot_pending = false;
+    }
+
+    char *automation_shot = xemu_automation_take_screenshot_request();
+    if (automation_shot) {
+        SaveScreenshotToFile(g_tex, g_flip_req, automation_shot);
+        g_free(automation_shot);
     }
 }

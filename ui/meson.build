@@ -21,6 +21,7 @@ subdir('thirdparty')
 
 xemu_ss = ss.source_set()
 xemu_ss.add(files(
+  'xemu-automation.c',
   'xemu-input.c',
   'xemu-monitor.c',
   'xemu-net.c',

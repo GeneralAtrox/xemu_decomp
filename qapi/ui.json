@@ -1724,3 +1724,62 @@
 { 'command': 'client_migrate_info',
   'data': { 'protocol': 'str', 'hostname': 'str', '*port': 'int',
             '*tls-port': 'int', '*cert-subject': 'str' } }
+
+##
+# @xemu-input-set:
+#
+# Set the state of the virtual controller that ``-automation``
+# binds to port 1 in place of the host's keyboard and gamepads.  The
+# state is held until the next call, so a press is a call with the
+# button followed by a call without it.
+#
+# @buttons: the buttons held: "a", "b", "x", "y", "black", "white",
+#     "back", "start", "dpad-up", "dpad-down", "dpad-left",
+#     "dpad-right", "left-stick" and "right-stick" (the stick clicks)
+#
+# @left-x: left stick, -1 (left) to 1 (right) (default 0)
+#
+# @left-y: left stick, -1 (down) to 1 (up) (default 0)
+#
+# @right-x: right stick, -1 (left) to 1 (right) (default 0)
+#
+# @right-y: right stick, -1 (down) to 1 (up) (default 0)
+#
+# @left-trigger: 0 (released) to 1 (fully pressed) (default 0)
+#
+# @right-trigger: 0 (released) to 1 (fully pressed) (default 0)
+#
+# Since: 10.2
+#
+# .. qmp-example::
+#
+#     -> { "execute": "xemu-input-set",
+#          "arguments": { "buttons": [ "a" ] } }
+#     <- { "return": {} }
+##
+{ 'command': 'xemu-input-set',
+  'data': { 'buttons': ['str'],
+            '*left-x': 'number', '*left-y': 'number',
+            '*right-x': 'number', '*right-y': 'number',
+            '*left-trigger': 'number', '*right-trigger': 'number' } }
+
+##
+# @xemu-screenshot:
+#
+# Save the next guest frame xemu draws as a PNG file, at the guest's
+# resolution and without xemu's own interface.  The command returns at
+# once; the file appears complete under @filename (it is written
+# beside it first and then renamed).
+#
+# @filename: the path of the PNG file to write
+#
+# Since: 10.2
+#
+# .. qmp-example::
+#
+#     -> { "execute": "xemu-screenshot",
+#          "arguments": { "filename": "/tmp/menu.png" } }
+#     <- { "return": {} }
+##
+{ 'command': 'xemu-screenshot',
+  'data': { 'filename': 'str' } }
